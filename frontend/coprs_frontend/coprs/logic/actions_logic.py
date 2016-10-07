@@ -6,6 +6,7 @@ from coprs import models
 from coprs import helpers
 from coprs import exceptions
 from flask import url_for
+from sqlalchemy import and_
 
 
 class ActionsLogic(object):
@@ -263,3 +264,31 @@ class ActionsLogic(object):
             created_on=int(time.time()),
         )
         db.session.add(action)
+
+    @classmethod
+    def send_fork_build_on_distgit(cls, fbuild, build, chroot):
+        """
+        Create ``Action`` saying that dist-git data from particular chroot should be forked from one build to another
+        Backend will ignore this kind of action
+        This approach is kind of abuse of actions since they are meant as BackendActions,
+        but we could make them more universal?
+        """
+        action = models.Action(
+            action_type=helpers.ActionTypeEnum("fork"),
+            object_type="build",
+            object_id=fbuild.id,
+            old_value=chroot.mock_chroot_id,
+            data=json.dumps({"old_dist_git_url": build.package.dist_git_url, "old_git_hash": chroot.git_hash}),
+            created_on=int(time.time()),
+            result=helpers.BackendResultEnum("success"),  # So the copr-backend will not care about this action
+        )
+        db.session.add(action)
+
+    @classmethod
+    def get_fork_build_on_distgit(cls, fbuild, chroot):
+        return models.Action.query.filter(and_(
+            models.Action.action_type == 7,
+            models.Action.object_type == "build",
+            models.Action.object_id == fbuild.id,
+            models.Action.old_value == str(chroot.mock_chroot_id)
+        )).first()

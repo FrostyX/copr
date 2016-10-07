@@ -31,10 +31,9 @@ def dist_git_importing_queue():
     if not builds_for_import:
         builds_for_import = BuildsLogic.get_build_importing_queue().filter(models.Build.is_background == true()).limit(30)
 
-    for task in builds_for_import:
+    def to_dict(task):
         copr = task.build.copr
-
-        task_dict = {
+        return {
             "task_id": task.import_task_id,
             "user": copr.owner_name, # TODO: user -> owner
             "project": task.build.copr.name,
@@ -42,11 +41,20 @@ def dist_git_importing_queue():
             "source_type": task.build.source_type,
             "source_json": task.build.source_json,
         }
+
+    for action, task in BuildsLogic.get_build_forking_queue():
+        task_dict = to_dict(task)
+        task_dict["source_type"] = helpers.BuildSourceEnum("fork")
+        task_dict["source_json"] = action.data
+        if task_dict not in builds_list:
+            builds_list.append(task_dict)
+
+    for task in builds_for_import:
+        task_dict = to_dict(task)
         if task_dict not in builds_list:
             builds_list.append(task_dict)
 
     response_dict = {"builds": builds_list}
-
     return flask.jsonify(response_dict)
 
 
@@ -86,10 +94,16 @@ def dist_git_upload_completed():
             build.package_id = package.id
             build.pkg_version = pkg_version
 
-            for ch in build_chroots:
-                if ch.status == helpers.StatusEnum("importing"):
-                    ch.status = helpers.StatusEnum("pending")
-                ch.git_hash = git_hash
+            # Was it forked?
+            action = actions_logic.ActionsLogic.get_fork_build_on_distgit(build, build_chroots[0])
+            if action:
+                action.ended_on = time.time()
+                db.session.add(action)
+            else:
+                for ch in build_chroots:
+                    if ch.status == helpers.StatusEnum("importing"):
+                        ch.status = helpers.StatusEnum("pending")
+                    ch.git_hash = git_hash
 
         # Failed?
         elif "error" in flask.request.json:

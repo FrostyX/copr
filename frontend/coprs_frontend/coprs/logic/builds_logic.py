@@ -84,6 +84,18 @@ class BuildsLogic(object):
         return query
 
     @classmethod
+    def get_build_forking_queue(cls):
+        """
+        Returns (Action, BuildChroot) tuples which are waiting to be forked on dist git
+        """
+        query = db.session.query(models.Action, models.BuildChroot).filter(and_(
+            models.Action.action_type == 7,
+            models.Action.object_type == "build",
+            models.Action.ended_on == None
+        )).join(models.BuildChroot, models.Action.object_id == models.BuildChroot.build_id)
+        return [(a, c) for a, c in query.all() if int(a.old_value) == c.mock_chroot_id]
+
+    @classmethod
     def get_build_task_queue(cls, is_background=False): # deprecated
         """
         Returns BuildChroots which are - waiting to be built or

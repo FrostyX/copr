@@ -225,7 +225,11 @@ class ProjectForking(object):
         fbuild.copr = fcopr
         fbuild.package = fpackage
         fbuild.build_chroots = [self.create_object(models.BuildChroot, c, exclude=["id", "build_id"]) for c in build.build_chroots]
+
         db.session.add(fbuild)
+        db.session.flush()
+        for chroot in build.build_chroots:
+            ActionsLogic.send_fork_build_on_distgit(fbuild, build, chroot)
         return fbuild
 
     def create_object(self, clazz, from_object, exclude=list()):
