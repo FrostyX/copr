@@ -350,6 +350,12 @@ class CoprsLogic(object):
             raise exceptions.InsufficientRightsException(
                 "Only owners may delete their projects.")
 
+    @classmethod
+    def changeable(cls, copr, modularity_property):
+        if not getattr(copr, modularity_property):
+            return True
+        return not copr.modules
+
 
 class CoprPermissionsLogic(object):
     @classmethod

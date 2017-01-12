@@ -186,6 +186,26 @@
   </form>
 {% endmacro %}
 
+{% macro copr_modularity_form(form, copr) %}
+  <form method="post" action="">
+    {{ render_form_errors(form) }}
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">1. Module naming</h3>
+      </div>
+      <div class="panel-body">
+
+        {% set warning = 'This property will not be possible to change after building first module from the project' %}
+        {{ render_field(form.name, label='Module Name', disabled=(not form.changeable(copr, 'module_name')), info=warning) }}
+        {{ render_field(form.stream, label='Module Stream', disabled=(not form.changeable(copr, 'module_stream')), info=warning) }}
+
+        {{ form.csrf_token }}
+        <input class="btn btn-primary pull-right" type="submit" value="Save">
+      </div>
+    </div>
+  </form>
+{% endmacro %}
+
 {% macro copr_permissions_form(form, copr, permissions) %}
   {% if permissions %}
     <form action="{{ url_for('coprs_ns.copr_update_permissions', username=copr.user.name, coprname=copr.name) }}" method=post>

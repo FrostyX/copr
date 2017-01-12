@@ -677,6 +677,31 @@ class CoprModifyForm(wtf.Form):
     auto_prune = wtforms.BooleanField(validators=[wtforms.validators.Optional()])
 
 
+class CoprModularityFormFactory(object):
+    @staticmethod
+    def create_form_cls(copr, _changeable=None):
+        """
+        :param _changeable: Function to determine, whether module attribute can be changed.
+                            See ``CoprsLogic.changeable``
+        """
+        class F(wtf.Form):
+            name = wtforms.StringField('Name', validators=[NameNotNumberValidator()])
+            stream = wtforms.StringField('Stream', validators=[NameNotNumberValidator()])
+            changeable = _changeable
+
+            def validate(self):
+                if not wtf.Form.validate(self):
+                    return False
+
+                for copr_attr, form_attr in [("module_name", "name"), ("module_stream", "stream")]:
+                    if getattr(self, form_attr).data and not self.changeable(copr, copr_attr):
+                        self.errors[form_attr] = ["Attribute {} cannot be changed".format(form_attr)]
+                        return False
+
+                return True
+        return F
+
+
 class CoprForkFormFactory(object):
     @staticmethod
     def create_form_cls(copr, user, groups):
@@ -746,8 +771,8 @@ class ActivateFasGroupForm(wtf.Form):
 
 
 class CreateModuleForm(wtf.Form):
-    name = wtforms.StringField("Name", validators=[wtforms.validators.DataRequired()])
-    stream = wtforms.StringField("Stream", validators=[wtforms.validators.DataRequired()])
+    name = wtforms.StringField("Name", validators=[wtforms.validators.DataRequired("Please set module name in project settings")])
+    stream = wtforms.StringField("Stream", validators=[wtforms.validators.DataRequired("Please set module stream in project settings")])
     version = wtforms.IntegerField("Version")
     filter = wtforms.FieldList(wtforms.StringField("Package Filter"))
     api = wtforms.FieldList(wtforms.StringField("Module API"))

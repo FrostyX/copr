@@ -1,0 +1,13 @@
+{% extends "coprs/detail/settings.html" %}
+{% from "coprs/_coprs_forms.html" import copr_modularity_form %}
+
+{% set selected_monitor_tab = "modularity" %}
+{%block settings_breadcrumb %}Modularity Details{% endblock %}
+
+{% block tab_content %}
+
+<h2> Modularity Details </h2>
+<p> Edit modularity settings for this project. Please be aware that some of this settings might not be possible to change after building a first module from this project. </p>
+{{ copr_modularity_form(form, copr) }}
+
+{% endblock %}

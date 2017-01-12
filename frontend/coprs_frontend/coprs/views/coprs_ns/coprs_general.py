@@ -442,6 +442,46 @@ def copr_edit(copr, form=None):
     return render_copr_edit(copr, form, 'coprs_ns.copr_update')
 
 
+
+@coprs_ns.route("/<username>/<coprname>/modularity/")
+@coprs_ns.route("/g/<group_name>/<coprname>/modularity/")
+@login_required
+@req_with_copr
+def copr_modularity(copr, form=None):
+    return render_copr_modularity(copr, form)
+
+
+def render_copr_modularity(copr, form):
+    if not form:
+        form = forms.CoprModularityFormFactory.create_form_cls(copr, CoprsLogic.changeable)()
+
+    for key in ["name", "stream"]:
+        getattr(form, key).data = getattr(form, key).data or getattr(copr, "module_" + key)
+
+    return flask.render_template(
+        "coprs/detail/settings/modularity.html",
+        copr=copr, form=form, view='coprs_ns.copr_modularity')
+
+
+@coprs_ns.route("/<username>/<coprname>/modularity/", methods=["POST"])
+@coprs_ns.route("/g/<group_name>/<coprname>/modularity/", methods=["POST"])
+@login_required
+@req_with_copr
+def copr_modularity_post(copr):
+    form = forms.CoprModularityFormFactory.create_form_cls(copr, CoprsLogic.changeable)()
+    if form.validate_on_submit():
+        prefix = "module_"
+        for key in ["name", "stream"]:
+            if CoprsLogic.changeable(copr, prefix + key):
+                setattr(copr, prefix + key, getattr(form, key).data)
+
+        db.session.add(copr)
+        db.session.commit()
+        flask.flash("Modularity settings updated sucessfully", "success")
+        return flask.redirect(url_for_copr_details(copr))
+    return render_copr_modularity(copr, form)
+
+
 def _check_rpmfusion(repos):
     if "rpmfusion" in repos:
         message = flask.Markup('Using rpmfusion as dependency is nearly always wrong. Please see <a href="https://fedorahosted.org/copr/wiki/UserDocs#WhatIcanbuildinCopr">What I can build in Copr</a>.')
@@ -967,9 +1007,9 @@ def build_module(copr, form):
         return render_create_module(copr, form, profiles=len(form.profile_names))
 
     mmd = modulemd.ModuleMetadata()
-    mmd.name = str(copr.name)
-    mmd.stream = str(form.stream.data)
-    mmd.version = form.version.data
+    mmd.name = str(copr.module_name)
+    mmd.stream = str(copr.module_stream)
+    mmd.version = int(time.time())
     mmd.summary = "Module from Copr repository: {}".format(copr.full_name)
 
     for package in form.filter.data:

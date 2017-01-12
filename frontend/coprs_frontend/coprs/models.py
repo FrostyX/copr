@@ -225,6 +225,10 @@ class Copr(db.Model, helpers.Serializer, CoprSearchRelatedData):
     # if backend deletion script should be run for the project's builds
     auto_prune = db.Column(db.Boolean, default=True, nullable=False, server_default="1")
 
+    # modularity properties
+    module_name = db.Column(db.String(100))
+    module_stream = db.Column(db.String(100))
+
     __mapper_args__ = {
         "order_by": created_on.desc()
     }

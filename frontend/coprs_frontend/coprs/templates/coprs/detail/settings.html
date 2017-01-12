@@ -36,6 +36,10 @@
     {{ tab("edit", "Project Details", copr_url('coprs_ns.copr_edit', copr)) }}
   {% endif %}
 
+  {% if g.user.can_edit(copr) %}
+    {{ tab("modularity", "Modularity", copr_url('coprs_ns.copr_modularity', copr)) }}
+  {% endif %}
+
   {% if not copr.is_a_group_project %}
     {{ tab("permissions", "Permissions", copr_url('coprs_ns.copr_permissions', copr)) }}
   {% endif %}
