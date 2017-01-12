@@ -746,8 +746,8 @@ class ActivateFasGroupForm(wtf.Form):
 
 
 class CreateModuleForm(wtf.Form):
-    name = wtforms.StringField("Name")
-    stream = wtforms.StringField("Stream")
+    name = wtforms.StringField("Name", validators=[wtforms.validators.DataRequired()])
+    stream = wtforms.StringField("Stream", validators=[wtforms.validators.DataRequired()])
     version = wtforms.IntegerField("Version")
     filter = wtforms.FieldList(wtforms.StringField("Package Filter"))
     api = wtforms.FieldList(wtforms.StringField("Module API"))
