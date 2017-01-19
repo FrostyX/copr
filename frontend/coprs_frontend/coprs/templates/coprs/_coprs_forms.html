@@ -197,7 +197,8 @@
 
         {% set warning = 'This property will not be possible to change after building first module from the project' %}
         {{ render_field(form.name, label='Module Name', disabled=(not form.changeable(copr, 'module_name')), info=warning) }}
-        {{ render_field(form.stream, label='Module Stream', disabled=(not form.changeable(copr, 'module_stream')), info=warning) }}
+        {{ render_field(form.stream, label='Module Stream', disabled=(not form.changeable(copr, 'module_stream')), info=[warning,
+           'Each version of a module has its own independent update stream associated with it. Module updates within the stream should be backwards compatible and should not change ABI. See <a href="https://fedoraproject.org/wiki/Modularity/Architecture/Module_versioning_and_branching/Basic_branching_terminology">naming and versioning wiki</a>.']) }}
 
         {{ form.csrf_token }}
         <input class="btn btn-primary pull-right" type="submit" value="Save">
