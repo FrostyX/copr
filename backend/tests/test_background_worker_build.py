@@ -171,7 +171,8 @@ def f_build_srpm(f_build_something):
     config = f_build_something
     config.fe_client.return_value.get.return_value = _get_srpm_job()
     config.ssh.set_command(
-        "copr-rpmbuild --verbose --drop-resultdir --srpm --build-id 855954 "
+        "copr-rpmbuild --verbose --drop-resultdir --srpm --task-url "
+        "http://copr-fe/backend/get-srpm-build-task/855954 "
         "--detached",
         0, "666", "",
     )
@@ -213,7 +214,8 @@ def f_build_rpm_case(f_build_rpm_case_no_repodata):
     _create_repodata(chroot)
 
     config.ssh.set_command(
-        "copr-rpmbuild --verbose --drop-resultdir --build-id 848963 "
+        "copr-rpmbuild --verbose --drop-resultdir --task-url "
+        "http://copr-fe/backend/get-build-task/848963-fedora-30-x86_64 "
         "--chroot fedora-30-x86_64 --detached",
         0, "666", "",
     )
@@ -815,7 +817,8 @@ def test_tail_f_nonzero_exit(_parse_results, f_build_rpm_case, caplog):
 def test_wrong_copr_rpmbuild_daemon_output(f_build_srpm, caplog):
     config = f_build_srpm
     config.ssh.set_command(
-        "copr-rpmbuild --verbose --drop-resultdir --srpm --build-id 855954 "
+        "copr-rpmbuild --verbose --drop-resultdir --srpm --task-url "
+        "http://copr-fe/backend/get-srpm-build-task/855954 "
         "--detached",
         0, "6a66", "",
     )
@@ -834,7 +837,8 @@ def test_wrong_copr_rpmbuild_daemon_output(f_build_srpm, caplog):
 def test_unable_to_start_builder(f_build_srpm, caplog):
     config = f_build_srpm
     config.ssh.set_command(
-        "copr-rpmbuild --verbose --drop-resultdir --srpm --build-id 855954 "
+        "copr-rpmbuild --verbose --drop-resultdir --srpm --task-url "
+        "http://copr-fe/backend/get-srpm-build-task/855954 "
         "--detached",
         10, "stdout\n", "stderr\n",
     )
