@@ -75,7 +75,7 @@ class TestExceptionHandling(CoprsTestCase):
     def test_api_504(self):
         def raise_exception():
             raise GatewayTimeout()
-        app.view_functions["apiv3_ns.home"] = raise_exception
+        app.view_functions["apiv3_ns.home_home"] = raise_exception
         r1 = self.tc.get("/api_3", follow_redirects=True)
         assert r1.status_code == 504
         data = json.loads(r1.data)
@@ -84,7 +84,7 @@ class TestExceptionHandling(CoprsTestCase):
     def test_api_500(self):
         def raise_exception():
             raise CoprHttpException("Whatever unspecified error")
-        app.view_functions["apiv3_ns.home"] = raise_exception
+        app.view_functions["apiv3_ns.home_home"] = raise_exception
         r1 = self.tc.get("/api_3", follow_redirects=True)
         assert r1.status_code == 500
         data = json.loads(r1.data)
@@ -93,7 +93,7 @@ class TestExceptionHandling(CoprsTestCase):
     def test_api_500_default_message(self):
         def raise_exception():
             raise CoprHttpException
-        app.view_functions["apiv3_ns.home"] = raise_exception
+        app.view_functions["apiv3_ns.home_home"] = raise_exception
         r1 = self.tc.get("/api_3/", follow_redirects=True)
         assert r1.status_code == 500
         data = json.loads(r1.data)
@@ -102,7 +102,7 @@ class TestExceptionHandling(CoprsTestCase):
     def test_api_500_runtime_error(self):
         def raise_exception():
             raise RuntimeError("Whatever unspecified error")
-        app.view_functions["apiv3_ns.home"] = raise_exception
+        app.view_functions["apiv3_ns.home_home"] = raise_exception
         r1 = self.tc.get("/api_3", follow_redirects=True)
         assert r1.status_code == 500
         data = json.loads(r1.data)
@@ -112,7 +112,7 @@ class TestExceptionHandling(CoprsTestCase):
     def test_api_500_storage(self):
         def raise_exception():
             raise InsufficientStorage
-        app.view_functions["apiv3_ns.home"] = raise_exception
+        app.view_functions["apiv3_ns.home_home"] = raise_exception
         r1 = self.tc.get("/api_3", follow_redirects=True)
         assert r1.status_code == 500
         data = json.loads(r1.data)
@@ -121,7 +121,7 @@ class TestExceptionHandling(CoprsTestCase):
     def test_api_500_in_progress(self):
         def raise_exception():
             raise ActionInProgressException("Hey! Action in progress", None)
-        app.view_functions["apiv3_ns.home"] = raise_exception
+        app.view_functions["apiv3_ns.home_home"] = raise_exception
         r1 = self.tc.get("/api_3", follow_redirects=True)
         assert r1.status_code == 500
         data = json.loads(r1.data)

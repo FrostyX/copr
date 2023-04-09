@@ -7,6 +7,7 @@ from functools import wraps
 from werkzeug.datastructures import ImmutableMultiDict, MultiDict
 from werkzeug.exceptions import HTTPException, NotFound, GatewayTimeout
 from sqlalchemy.orm.attributes import InstrumentedAttribute
+from flask_restx import Api, Namespace, Resource
 from coprs import app
 from coprs.exceptions import (
     AccessRestricted,
@@ -21,6 +22,13 @@ from coprs.helpers import streamed_json
 
 
 apiv3_ns = flask.Blueprint("apiv3_ns", __name__, url_prefix="/api_3")
+api = Api(
+    app=apiv3_ns,
+    version="1.0",
+    title="Copr APIv3",
+    description="See python client - <https://python-copr.readthedocs.io>",
+    doc="/docs",
+)
 
 
 # HTTP methods
