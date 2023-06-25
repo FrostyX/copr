@@ -1,6 +1,8 @@
 Client version 3
 ================
 
+FOOO
+
 This documentation describes the third version of python Copr client, which officially supports APIv3. This version
 addresses the problems that we had with previous versions and therefore obsoletes them.
 
