@@ -102,6 +102,10 @@ def get_project_list(ownername=None, **kwargs):
 @query_params()
 # @TODO should the param be query or projectname?
 def search_projects(query, **kwargs):
+    from coprs.exceptions import ApiError
+    raise ApiError("We are sorry, the fulltext search is causing performance "
+                   "issues on our server. We needed to temporarily disable it. "
+                   "See more here https://github.com/fedora-copr/copr/issues/3026")
     try:
         search_query = CoprsLogic.get_multiple_fulltext(query)
         paginator = Paginator(search_query, models.Copr, **kwargs)

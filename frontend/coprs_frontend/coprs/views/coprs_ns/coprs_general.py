@@ -165,6 +165,16 @@ def coprs_fulltext_search(page=1):
                                    build.copr, build_id=build.id)
             return flask.redirect(url)
 
+    return flask.render_template(
+        "html-error.html",
+        message=("We are sorry, the fulltext search is causing performance "
+                 "issues on our server. We needed to temporarily disable it. "
+                 "See more here https://github.com/fedora-copr/copr/issues/3026"),
+        error_code=500,
+        error_title="Searching disabled")
+
+
+
     try:
         query = coprs_logic.CoprsLogic.get_multiple_fulltext(
             **flask.request.args)
