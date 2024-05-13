@@ -780,6 +780,7 @@ class Commands(object):
             "spec_template": args.spec_template,
             "python_versions": args.pythonversions,
             "max_builds": args.max_builds,
+            "timeout": args.timeout,
             "webhook_rebuild": ON_OFF_MAP[args.webhook_rebuild],
         }
         if args.create:
@@ -800,6 +801,7 @@ class Commands(object):
             "scm_type": args.scm_type,
             "source_build_method": args.srpm_build_method,
             "max_builds": args.max_builds,
+            "timeout": args.timeout,
             "webhook_rebuild": ON_OFF_MAP[args.webhook_rebuild],
         }
         if args.create:
@@ -817,6 +819,7 @@ class Commands(object):
             "namespace": args.namespace,
             "committish": args.committish,
             "max_builds": args.max_builds,
+            "timeout": args.timeout,
             "webhook_rebuild": ON_OFF_MAP[args.webhook_rebuild],
         }
         ownername, projectname = self.parse_name(args.copr)
@@ -835,6 +838,7 @@ class Commands(object):
             "package_name": args.name,
             "gem_name": args.gem_name,
             "max_builds": args.max_builds,
+            "timeout": args.timeout,
             "webhook_rebuild": ON_OFF_MAP[args.webhook_rebuild],
         }
         if args.create:
@@ -853,6 +857,7 @@ class Commands(object):
             "script_builddeps": args.script_builddeps,
             "script_resultdir": args.script_resultdir,
             "max_builds": args.max_builds,
+            "timeout": args.timeout,
             "webhook_rebuild": ON_OFF_MAP[args.webhook_rebuild],
         }
         if args.create:
