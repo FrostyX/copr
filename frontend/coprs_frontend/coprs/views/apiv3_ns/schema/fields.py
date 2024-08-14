@@ -42,21 +42,25 @@ class Url(StringMixin, Raw):
 id_field = Integer(
     description="Numeric ID",
     example=123,
+    readonly=True,
 )
 
 mock_chroot = String(
     description="Mock chroot",
     example="fedora-rawhide-x86_64",
+    # required=True,
 )
 
 ownername = String(
     description="User or group name",
     example="@copr",
+    readonly=True,
 )
 
 full_name = String(
     description="Full name of the project",
     example="@copr/pull-requests",
+    readonly=True,
 )
 
 projectname = String(

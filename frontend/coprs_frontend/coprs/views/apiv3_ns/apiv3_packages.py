@@ -29,10 +29,11 @@ from coprs.views.apiv3_ns.schema.schemas import (
     package_get_params,
     package_add_input_model,
     package_edit_input_model,
+    package_reset_input_model,
+    package_delete_input_model,
     package_get_list_params,
     pagination_package_model,
     build_model,
-    base_package_input_model,
 )
 from coprs.views.apiv3_ns.schema.docs import add_package_docs, edit_package_docs
 from coprs.logic.packages_logic import PackagesLogic
@@ -247,7 +248,7 @@ class PackageReset(Resource):
 
     @api_login_required
     @apiv3_packages_ns.marshal_with(package_model)
-    @apiv3_packages_ns.expect(base_package_input_model)
+    @apiv3_packages_ns.expect(package_reset_input_model)
     def put(self):
         """
         Reset a package
@@ -258,7 +259,7 @@ class PackageReset(Resource):
     @deprecated_route_method_type(apiv3_packages_ns, "POST", "PUT")
     @api_login_required
     @apiv3_packages_ns.marshal_with(package_model)
-    @apiv3_packages_ns.expect(base_package_input_model)
+    @apiv3_packages_ns.expect(package_reset_input_model)
     def post(self):
         """
         Reset a package
@@ -323,7 +324,7 @@ class PackageDelete(Resource):
 
     @api_login_required
     @apiv3_packages_ns.marshal_with(package_model)
-    @apiv3_packages_ns.expect(base_package_input_model)
+    @apiv3_packages_ns.expect(package_delete_input_model)
     def delete(self):
         """
         Delete a package
@@ -334,7 +335,7 @@ class PackageDelete(Resource):
     @deprecated_route_method_type(apiv3_packages_ns, "POST", "DELETE")
     @api_login_required
     @apiv3_packages_ns.marshal_with(package_model)
-    @apiv3_packages_ns.expect(base_package_input_model)
+    @apiv3_packages_ns.expect(package_delete_input_model)
     def post(self):
         """
         Delete a package

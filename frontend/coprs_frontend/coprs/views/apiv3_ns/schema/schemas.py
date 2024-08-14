@@ -150,7 +150,8 @@ class ParamsSchema(InputSchema):
     def _field_schema(self, field):
         attr = getattr(self, field.name)
         schema = {k: v for k, v in attr.schema().items() if v is not None}
-        if attr in self.required_attrs:
+
+        if attr in self.required_attrs or attr.required:
             schema |= {"required": True}
         return schema
 
@@ -187,40 +188,6 @@ class Pagination(Schema):
 
 
 @dataclass
-class _ProjectChrootFields:
-    additional_repos: List = fields.additional_repos
-    additional_packages: List = fields.additional_packages
-    additional_modules: List = fields.additional_modules
-    with_opts: List = fields.with_opts
-    without_opts: List = fields.without_opts
-    isolation: String = fields.isolation
-
-
-@dataclass
-class ProjectChroot(_ProjectChrootFields, Schema):
-    mock_chroot: String = fields.mock_chroot
-    ownername: String = fields.ownername
-    projectname: String = fields.projectname
-    comps_name: String = String(description="Name of the comps.xml file")
-    delete_after_days: Integer = Integer(
-        description=("The project will be automatically deleted after "
-                     "this many days"),
-        example=30,
-    )
-
-
-@dataclass
-class ProjectChrootGet(ParamsSchema):
-    ownername: String = fields.ownername
-    projectname: String = fields.projectname
-    chrootname: String = mock_chroot
-
-    @property
-    def required_attrs(self) -> list:
-        return [self.ownername, self.projectname, self.chrootname]
-
-
-@dataclass
 class Repo(Schema):
     baseurl: Url = Url()
     module_hotfixes: Boolean = fields.module_hotfixes
@@ -236,14 +203,64 @@ _repo_model = Repo.get_cls().model()
 
 
 @dataclass
-class ProjectChrootBuildConfig(_ProjectChrootFields, Schema):
-    chroot: String = fields.chroot
-    enable_net: Boolean = fields.enable_net
-    repos: List = List(Nested(_repo_model))
+class ProjectChrootGet(ParamsSchema):
+    ownername: String = fields.ownername
+    projectname: String = fields.projectname
+    chrootname: String = mock_chroot
+
+    @property
+    def required_attrs(self) -> list:
+        return [self.ownername, self.projectname, self.chrootname]
 
 
 @dataclass
-class _SourceDictScmFields:
+class ProjectChroot(Schema):
+    mock_chroot: String = fields.mock_chroot
+    ownername: String = fields.ownername
+    projectname: String = fields.projectname
+    comps_name: String = String(description="Name of the comps.xml file")
+    delete_after_days: Integer = Integer(
+        description=("The project will be automatically deleted after "
+                     "this many days"),
+        example=30,
+    )
+    additional_repos: List = fields.additional_repos
+    additional_packages: List = fields.additional_packages
+    additional_modules: List = fields.additional_modules
+    with_opts: List = fields.with_opts
+    without_opts: List = fields.without_opts
+    isolation: String = fields.isolation
+
+
+@dataclass
+class ProjectChrootBuildConfig(Schema):
+    chroot: String = fields.chroot
+    enable_net: Boolean = fields.enable_net
+    repos: List = List(Nested(_repo_model))
+    additional_repos: List = fields.additional_repos
+    additional_packages: List = fields.additional_packages
+    additional_modules: List = fields.additional_modules
+    with_opts: List = fields.with_opts
+    without_opts: List = fields.without_opts
+    isolation: String = fields.isolation
+
+
+@dataclass
+class SourceDictUrl:
+    pkgs: List = List(
+        Url,
+        description="List of urls to build from",
+        example=["https://example.com/some.src.rpm"],
+    )
+
+
+@dataclass
+class SourceDictUpload:
+    pkgs: List = List(Raw, description="application/x-rpm files to build from")
+
+
+@dataclass
+class SourceDictSCM:
     clone_url: String = Url(
         description="URL to your Git or SVN repository",
         example="https://github.com/fedora-copr/copr.git",
@@ -257,16 +274,12 @@ class _SourceDictScmFields:
         description="Subdirectory where source files and .spec are located",
         example="cli",
     )
-
-
-@dataclass
-class SourceDictScm(_SourceDictScmFields, Schema):
+    scm_type: String = fields.scm_type
     source_build_method: String = fields.source_build_method
-    type: String = scm_type
 
 
 @dataclass
-class SourceDictPyPI(Schema):
+class SourceDictPyPI:
     pypi_package_name: String = String(
         description="Package name in the Python Package Index.",
         example="copr",
@@ -301,6 +314,31 @@ class SourceDictPyPI(Schema):
         ),
         example=["3", "2"],
     )
+
+
+@dataclass
+class SourceDictDistGit:
+    distgit: String = fields.distgit
+    namespace: String = String(
+        description="DistGit namescape",
+        example="@copr/copr",
+    )
+    packagename: String = fields.packagename
+    committish: String = fields.committish
+
+
+@dataclass
+class SourceDictRubyGems:
+    gem_name: String = fields.gem_name
+
+
+@dataclass
+class SourceDictCustom:
+    script: String = fields.script
+    chroot: String = fields.chroot
+    builddeps: String = fields.builddeps
+    resultdir: String = fields.resultdir
+    repos: List = List(Nested(_repo_model))
 
 
 @dataclass
@@ -389,21 +427,7 @@ class PackageGet(ParamsSchema):
 
 
 @dataclass
-class BasePackage(InputSchema):
-    max_builds: Integer = Integer(
-        description=(
-            "Keep only the specified number of the newest-by-id builds "
-            "(garbage collector is run daily)"
-        ),
-        example=10,
-    )
-    timeout: Integer = fields.timeout
-    webhook_rebuild: Boolean = Boolean()
-    packagename: String = fields.packagename
-
-
-@dataclass
-class PackageAdd(_SourceDictScmFields, SourceDictPyPI, BasePackage, InputSchema):
+class PackageAdd(SourceDictSCM, SourceDictPyPI, InputSchema):
     # rest of SCM
     scm_type: String = fields.scm_type
 
@@ -418,9 +442,42 @@ class PackageAdd(_SourceDictScmFields, SourceDictPyPI, BasePackage, InputSchema)
 
     source_build_method: String = fields.source_build_method
 
+    max_builds: Integer = Integer(
+        description=(
+            "Keep only the specified number of the newest-by-id builds "
+            "(garbage collector is run daily)"
+        ),
+        example=10,
+    )
+    timeout: Integer = fields.timeout
+    webhook_rebuild: Boolean = Boolean()
+    # FIXME should this be package_name?
+    packagename: String = fields.packagename
+
 
 @dataclass
-class _ProjectFields:
+class PackageReset(InputSchema):
+    ownername: String = fields.ownername
+    projectname: String = fields.projectname
+    # FIXME should this be package_name?
+    packagename: String = fields.packagename
+
+
+@dataclass
+class PackageDelete(InputSchema):
+    ownername: String = fields.ownername
+    projectname: String = fields.projectname
+    # FIXME should this be package_name?
+    packagename: String = fields.packagename
+
+
+@dataclass
+class Project(Schema):
+    id: Integer = fields.id_field
+    ownername: String = fields.ownername
+    full_name: String = fields.full_name
+    chroot_repos: Raw = Raw(readonly=True)
+
     homepage: Url = Url(
         description="Homepage URL of Copr project",
         example="https://github.com/fedora-copr",
@@ -469,26 +526,19 @@ class _ProjectFields:
         example=42,
     )
 
-
-@dataclass
-class _ProjectGetAddFields:
     name: String = fields.name
     persistent: Boolean = Boolean(
         description="Build and project is immune against deletion",
     )
+
+    # FIXME repos
     additional_repos: List = fields.additional_repos
+    # TODO: fix inconsistency - additional_repos <-> repos
+    # repos: String = additional_repos
 
 
 @dataclass
-class Project(_ProjectFields, _ProjectGetAddFields, Schema):
-    id: Integer = fields.id_field
-    ownername: String = fields.ownername
-    full_name: String = fields.full_name
-    chroot_repos: Raw = Raw()
-
-
-@dataclass
-class _ProjectAddEditFields:
+class ProjectAddEdit(Project, InputSchema):
     chroots: List = fields.chroots
     bootstrap_image: String = fields.bootstrap_image
     multilib: Boolean = Boolean()
@@ -505,19 +555,6 @@ class _ProjectAddEditFields:
 
 
 @dataclass
-class ProjectAdd(
-    _ProjectFields, _ProjectGetAddFields, _ProjectAddEditFields, InputSchema
-):
-    ...
-
-
-@dataclass
-class ProjectEdit(_ProjectFields, _ProjectAddEditFields, InputSchema):
-    # TODO: fix inconsistency - additional_repos <-> repos
-    repos: String = additional_repos
-
-
-@dataclass
 class ProjectFork(InputSchema):
     name: String = fields.name
     ownername: String = fields.ownername
@@ -531,6 +568,7 @@ class ProjectFork(InputSchema):
 
 @dataclass
 class ProjectDelete(InputSchema):
+    # FIXME missing ownername and projectname?
     verify: Boolean = Boolean()
 
 
@@ -545,16 +583,17 @@ class FullnameSchema(ParamsSchema):
 
 
 @dataclass
-class CanBuildParams(FullnameSchema):
+class CanBuildParams(ParamsSchema):
     who: String = String(example="user123")
-
-    @property
-    def required_attrs(self) -> list:
-        return [self.who]
+    ownername: String = fields.ownername
+    projectname: String = fields.projectname
 
 
 @dataclass
-class CanBuildSchema(CanBuildParams):
+class CanBuildSchema(Schema):
+    who: String = String(example="user123")
+    ownername: String = fields.ownername
+    projectname: String = fields.projectname
     can_build_in: Boolean = Boolean(example=True)
 
 
@@ -651,7 +690,7 @@ class ModuleAdd(InputSchema):
 
 
 @dataclass
-class _ModulePackage(Schema):
+class MonitorPackage(Schema):
     name: String = fields.name
     # inconsistent keys in chroots dict, impossible with flask-restx to do
     chroots: Raw = Raw(
@@ -660,14 +699,14 @@ class _ModulePackage(Schema):
     )
 
 
-_module_package_model = _ModulePackage.get_cls().model()
+monitor_package_model = MonitorPackage.get_cls().model()
 
 
 @dataclass
 class Monitor(Schema):
     message: String = String(example="Project monitor request successful")
     output: String = String(example="ok")
-    packages: List = List(Nested(_module_package_model))
+    packages: List = List(Nested(monitor_package_model))
 
 
 @dataclass
@@ -698,7 +737,10 @@ class ListBuild(ParamsSchema):
 
 
 @dataclass
-class _GenericBuildOptions:
+class BaseBuild:
+    ownername: String = fields.ownername
+    projectname: String = fields.projectname
+    project_dirname: String = fields.project_dirname
     chroot_names: List = List(
         String,
         description="List of chroot names",
@@ -729,65 +771,38 @@ class _GenericBuildOptions:
 
 
 @dataclass
-class _BuildDataCommon:
-    ownername: String = fields.ownername
-    projectname: String = fields.projectname
+class CreateBuildUrl(SourceDictUrl, BaseBuild, InputSchema):
+    ...
 
 
 @dataclass
-class CreateBuildUrl(_BuildDataCommon, _GenericBuildOptions, InputSchema):
-    project_dirname: String = fields.project_dirname
-    pkgs: List = List(
-        Url,
-        description="List of urls to build from",
-        example=["https://example.com/some.src.rpm"],
-    )
+class CreateBuildUpload(SourceDictUpload, BaseBuild, InputSchema):
+    ...
 
 
 @dataclass
-class CreateBuildUpload(_BuildDataCommon, _GenericBuildOptions, InputSchema):
-    project_dirname: String = fields.project_dirname
-    pkgs: List = List(Raw, description="application/x-rpm files to build from")
+class CreateBuildSCM(SourceDictSCM, BaseBuild, InputSchema):
+    ...
 
 
 @dataclass
-class CreateBuildSCM(_BuildDataCommon, _GenericBuildOptions, _SourceDictScmFields, InputSchema):
-    project_dirname: String = fields.project_dirname
-    scm_type: String = fields.scm_type
-    source_build_method: String = fields.source_build_method
+class CreateBuildDistGit(SourceDictDistGit, BaseBuild, InputSchema):
+    ...
 
 
 @dataclass
-class CreateBuildDistGit(_BuildDataCommon, _GenericBuildOptions, InputSchema):
-    distgit: String = fields.distgit
-    namespace: String = String(
-        description="DistGit namescape",
-        example="@copr/copr",
-    )
-    package_name: String = fields.packagename
-    committish: String = fields.committish
-    project_dirname: String = fields.project_dirname
+class CreateBuildPyPI(SourceDictPyPI, BaseBuild, InputSchema):
+    ...
 
 
 @dataclass
-class CreateBuildPyPI(_BuildDataCommon, _GenericBuildOptions, SourceDictPyPI, InputSchema):
-    project_dirname: String = fields.project_dirname
+class CreateBuildRubyGems(SourceDictRubyGems, BaseBuild, InputSchema):
+    ...
 
 
 @dataclass
-class CreateBuildRubyGems(_BuildDataCommon, _GenericBuildOptions, InputSchema):
-    project_dirname: String = fields.project_dirname
-    gem_name: String = fields.gem_name
-
-
-@dataclass
-class CreateBuildCustom(_BuildDataCommon, _GenericBuildOptions, InputSchema):
-    script: String = fields.script
-    chroot: String = fields.chroot
-    builddeps: String = fields.builddeps
-    resultdir: String = fields.resultdir
-    project_dirname: String = fields.project_dirname
-    repos: List = List(Nested(_repo_model))
+class CreateBuildCustom(SourceDictCustom, BaseBuild, InputSchema):
+    ...
 
 
 @dataclass
@@ -795,12 +810,9 @@ class DeleteBuilds(InputSchema):
     builds: List = List(Integer, description="List of build ids to delete")
 
 
-
 # OUTPUT MODELS
 project_chroot_model = ProjectChroot.get_cls().model()
 project_chroot_build_config_model = ProjectChrootBuildConfig.get_cls().model()
-source_dict_scm_model = SourceDictScm.get_cls().model()
-source_dict_pypi_model = SourceDictPyPI.get_cls().model()
 package_model = Package.get_cls().model()
 project_model = Project.get_cls().model()
 build_chroot_model = BuildChroot.get_cls().model()
@@ -828,10 +840,11 @@ repo_model = _repo_model
 # INPUT MODELS
 package_add_input_model = PackageAdd.get_cls().input_model()
 package_edit_input_model = package_add_input_model
-base_package_input_model = BasePackage.get_cls().input_model()
+package_reset_input_model = PackageReset.get_cls().input_model()
+package_delete_input_model = PackageDelete.get_cls().input_model()
 
-project_add_input_model = ProjectAdd.get_cls().input_model()
-project_edit_input_model = ProjectEdit.get_cls().input_model()
+project_add_input_model = ProjectAddEdit.get_cls().input_model()
+project_edit_input_model = ProjectAddEdit.get_cls().input_model()
 project_fork_input_model = ProjectFork.get_cls().input_model()
 project_delete_input_model = ProjectDelete.get_cls().input_model()
 module_add_input_model = ModuleAdd.get_cls().input_model()
