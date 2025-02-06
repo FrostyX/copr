@@ -391,12 +391,12 @@ class PulpStorage(Storage):
             return "{0}-devel".format(repository)
         return repository
 
-    def _get_repository(self, chroot):
-        name = self._repository_name(chroot)
+    def _get_repository(self, chroot, dirname=None):
+        name = self._repository_name(chroot, dirname=dirname)
         response = self.client.get_repository(name)
         return response.json()["results"][0]["pulp_href"]
 
-    def _get_distribution(self, chroot):
-        name = self._distribution_name(chroot)
+    def _get_distribution(self, chroot, dirname=None):
+        name = self._distribution_name(chroot, dirname=dirname)
         response = self.client.get_distribution(name)
         return response.json()["results"][0]["pulp_href"]
