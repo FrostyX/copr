@@ -242,8 +242,8 @@ jobs:
     preserve_project: true
 
   - job: vm_image_build
-    # trigger: pull_request
-    trigger: commit
+    trigger: pull_request
+    # trigger: commit
     image_request:
       architecture: x86_64
       image_type: aws
