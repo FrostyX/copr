@@ -240,3 +240,20 @@ jobs:
     owner: packit
     project: copr
     preserve_project: true
+
+  - job: vm_image_build
+    # trigger: pull_request
+    trigger: commit
+    image_request:
+      architecture: x86_64
+      image_type: aws
+      upload_request:
+        type: aws
+        options:
+          share_with_accounts: ["125523088429"]
+    image_customizations:
+      packages: [hello]
+    image_distribution: fedora-41
+    owner: jkadlcik
+    project: test
+    copr_chroot: fedora-41-x86_64
