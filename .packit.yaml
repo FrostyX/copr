@@ -254,8 +254,8 @@ jobs:
     image_customizations:
       packages: [hello]
     image_distribution: fedora-41
-    owner: jkadlcik
-    project: test
+    # owner: jkadlcik
+    # project: test
     copr_chroot: fedora-41-x86_64
 
 #
